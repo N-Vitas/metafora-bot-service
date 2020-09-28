@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"metafora-bot-service/admin"
 	"metafora-bot-service/controller"
 	"metafora-bot-service/database"
 	"metafora-bot-service/googledrive"
@@ -17,7 +16,7 @@ func main() {
 	nats := controller.Init(db)
 	conn := webapp.NewServerSoket("/v1", nats, srv)
 	go conn.ListenSocket()
-	admin.NewAdminInterface()
+	restfull.NewAdminInterface()
 	restfull.Init(db.GetDb, nats.GetTableName, "KJjvcj4545sd#jssdf7&sdf", true)
 	http.HandleFunc("/upload", conn.UploadFile)
 	log.Fatal(http.ListenAndServe(conn.Controller.Host, nil))
