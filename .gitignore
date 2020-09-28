@@ -1,5 +1,5 @@
-/node_modules
-/build
+/admin/node_modules
+/admin/build
 
 # misc
 .DS_Store
@@ -16,4 +16,3 @@ yarn-error.log*
 DS_Store
 package-lock.json
 wp_chat64.*
-admin
