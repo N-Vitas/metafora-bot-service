@@ -7,6 +7,8 @@ func (app *Resource) Loader() {
 	app.Add(app.LoginService())
 	app.Add(app.GroupService())
 	app.Add(app.ManagerService())
+	app.Add(app.MessageService())
+	app.Add(app.RoomService())
 }
 
 // Add добавляет в список сервис

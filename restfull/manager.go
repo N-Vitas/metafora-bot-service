@@ -30,6 +30,11 @@ func (app *Resource) ManagerService() *restful.WebService {
 
 // GetAllManager Эндпоинт всех менеджеров
 func (app *Resource) GetAllManager(req *restful.Request, resp *restful.Response) {
+	_, forbiden := app.JWTFilter(req)
+	if forbiden != nil {
+		WriteStatusError(http.StatusUnauthorized, forbiden, resp)
+		return
+	}
 	managers := []Manager{}
 	query := "select id, userID, chatID, firstname, lastname, username, reghash, status, date from " + app.Table("managers")
 	rows, err := app.GetDb().Query(query)
