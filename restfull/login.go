@@ -41,6 +41,7 @@ func (app *Resource) GetToken(req *restful.Request, resp *restful.Response) {
 		return
 	}
 	query := "select id, login, name, userType, blocked from " + app.Table("user") + " where login = ? and password = ?"
+	Info("%s", GetMD5Hash(auth.Password))
 	err = app.GetDb().QueryRow(query, auth.Login, GetMD5Hash(auth.Password)).Scan(&UserID, &UserLogin, &UserName, &UserType, &UserBlocked)
 	if err != nil {
 		WriteStatusError(http.StatusForbidden, err, resp)
