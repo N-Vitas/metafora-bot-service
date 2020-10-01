@@ -136,6 +136,7 @@ func (s *ServerSoket) ListenSocket() {
 		client := NewClient(ws, s)
 		s.Add(client)
 		defer func() {
+			s.Controller.ExitClientRoom(client.auth)
 			s.Del(client)
 			err := ws.Close()
 			if err != nil {

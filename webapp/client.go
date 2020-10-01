@@ -211,6 +211,7 @@ func (c *Client) listenRead() {
 				if msg.Action == "Auth" {
 					c.timer = c.server.Controller.NextReplicTime()
 					c.auth = msg.Author
+					c.server.Controller.ReopenRoom(msg.Author)
 					msg.Body = "Welcom Chat Bot"
 					c.doSell = true
 					if room, ok := c.server.Controller.GetRoom(msg.Author); ok {

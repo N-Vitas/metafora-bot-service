@@ -2,6 +2,9 @@ package restfull
 
 import (
 	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/emicklei/go-restful"
@@ -16,6 +19,9 @@ func (app *Resource) RoomService() *restful.WebService {
 	ws.Route(ws.GET("/").To(app.GetAllRoom).
 		Doc("Получение всех комнат").
 		Operation("GetAllRoom"))
+	ws.Route(ws.POST("/update").To(app.UpdateRoomByID).
+		Doc("Изменения в чате").
+		Operation("UpdateRoomByID"))
 	return ws
 }
 
@@ -74,6 +80,36 @@ func (app *Resource) GetAllRoom(req *restful.Request, resp *restful.Response) {
 	}
 	// Ответ пользователю
 	WriteResponse(rooms, resp)
+}
+
+// UpdateRoomByID Изменение статуса в комнате
+func (app *Resource) UpdateRoomByID(req *restful.Request, resp *restful.Response) {
+	_, forbiden := app.JWTFilter(req)
+	if forbiden != nil {
+		WriteStatusError(http.StatusUnauthorized, forbiden, resp)
+		return
+	}
+	msg := struct {
+		ChatRoom string `json:"chatRoom"`
+		Status   int64  `json:"status"`
+	}{"", 0}
+	decoder := json.NewDecoder(req.Request.Body)
+	err := decoder.Decode(&msg)
+	if err != nil {
+		WriteStatusError(http.StatusBadRequest, errors.New("Не удалось распарсить данные"), resp)
+		return
+	}
+	if len(msg.ChatRoom) == 0 {
+		WriteStatusError(http.StatusBadRequest, errors.New("Отсутствует ID комнаты"), resp)
+		return
+	}
+	_, err = app.GetDb().Exec(fmt.Sprintf(`UPDATE %s SET status=%d WHERE chatRoom='%s'`,
+		app.Table("rooms"), msg.Status, msg.ChatRoom))
+	if err != nil {
+		WriteStatusError(http.StatusInternalServerError, errors.New("Не удалось обновить менеджера "+err.Error()), resp)
+		return
+	}
+	WriteSuccess(resp)
 }
 
 // Room Структура Менеджера

@@ -40,6 +40,7 @@ func (app *Resource) GetToken(req *restful.Request, resp *restful.Response) {
 		WriteStatusError(http.StatusBadRequest, errors.New("Не удалось распарсить данные"), resp)
 		return
 	}
+	Info("%s", GetMD5Hash(auth.Password))
 	query := "select id, login, name, userType, blocked from " + app.Table("user") + " where login = ? and password = ?"
 	err = app.GetDb().QueryRow(query, auth.Login, GetMD5Hash(auth.Password)).Scan(&UserID, &UserLogin, &UserName, &UserType, &UserBlocked)
 	if err != nil {

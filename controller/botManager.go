@@ -86,7 +86,23 @@ func (c *Controller) OnMessage(chatID int64, message string) {
 	if err != nil {
 		Error("Ошибка загрузки сообщений %v", err)
 	}
-	c.onMessage(room.Room, chatID, message, params)
+	if c.onMessage != nil {
+		c.onMessage(room.Room, chatID, message, params)
+	} else {
+		// Если сообщение отправить не удалось, то ставим чату статус покинут и сообщаем менеджеру
+		c.ExitClientRoom(room.Room)
+		c.bot.SendOpenButton(chatID, "Клиент покинул чат")
+	}
+}
+
+// ExitClientRoom Выход клиента из сокета и постановка статуса в покинутую комнату
+func (c *Controller) ExitClientRoom(auth string) {
+	rooms.ChangeStatusRoom(c.GetTableName("rooms"), c.DB.GetDb(), auth, rooms.StatusLeave)
+}
+
+// ReopenRoom Если клиент вернулся то открываем комнату снова
+func (c *Controller) ReopenRoom(auth string) {
+	rooms.ChangeStatusRoom(c.GetTableName("rooms"), c.DB.GetDb(), auth, rooms.StatusOpen)
 }
 
 // SetOnMessage Перехват уведомления клиента

@@ -20,6 +20,13 @@ type Room struct {
 	Datetime    string `json:"date"`
 }
 
+const (
+	StatusClose    = 0
+	StatusOpen     = 1
+	StatusForbiden = 2
+	StatusLeave    = 3
+)
+
 // Init Создание базы данных для сообщений
 func Init(table string, db *sql.DB) error {
 	// query := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
@@ -147,6 +154,12 @@ func GoRoomMagager(chatID int64, roomID int64, table string, db *sql.DB) error {
 // ExitRoomMagager Менеджер освобождает комнату
 func ExitRoomMagager(chatID int64, table string, db *sql.DB) error {
 	_, err := db.Exec(fmt.Sprintf(`UPDATE %s SET chatID = 0, mute=0 WHERE chatID = %d and mute=0`, table, chatID))
+	return err
+}
+
+// ChangeStatusRoom Клиент освобождает комнату
+func ChangeStatusRoom(table string, db *sql.DB, chatRoom string, status int64) error {
+	_, err := db.Exec(fmt.Sprintf(`UPDATE %s SET status = %d WHERE chatRoom = '%s' and status!=0`, table, status, chatRoom))
 	return err
 }
 
