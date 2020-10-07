@@ -1,6 +1,8 @@
 package restfull
 
 import (
+	"net/http"
+
 	"github.com/emicklei/go-restful"
 )
 
@@ -18,11 +20,11 @@ func (app *Resource) StatisticService() *restful.WebService {
 
 // GetAllStats Эндпоинт всей статистики
 func (app *Resource) GetAllStats(req *restful.Request, resp *restful.Response) {
-	// _, forbiden := app.JWTFilter(req)
-	// if forbiden != nil {
-	// 	WriteStatusError(http.StatusUnauthorized, forbiden, resp)
-	// 	return
-	// }
+	_, forbiden := app.JWTFilter(req)
+	if forbiden != nil {
+		WriteStatusError(http.StatusUnauthorized, forbiden, resp)
+		return
+	}
 	r := Statistic{}
 	query := `select * from (
 		(select count(r1.id) openChats from ` + app.Table("rooms") + ` r1 where r1.status > 0),

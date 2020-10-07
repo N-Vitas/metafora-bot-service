@@ -10,6 +10,7 @@ func (app *Resource) Loader() {
 	app.Add(app.MessageService())
 	app.Add(app.RoomService())
 	app.Add(app.StatisticService())
+	app.Add(app.SettingsService())
 }
 
 // Add добавляет в список сервис
