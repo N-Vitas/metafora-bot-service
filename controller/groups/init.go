@@ -66,6 +66,26 @@ func Get(id int64, table string, db *sql.DB) (Group, error) {
 	return s, err
 }
 
+// GetParents Получение группы
+func GetParents(parentID int64, table string, db *sql.DB) ([]Group, error) {
+	res := []Group{}
+	query := fmt.Sprintf(`SELECT id, parentID ,name ,title ,view ,date ,status FROM %s where parentID = %d`, table, parentID)
+	rows, err := db.Query(query)
+	if err != nil {
+		return res, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		s := Group{}
+		err = rows.Scan(&s.ID, &s.ParentID, &s.Name, &s.Title, &s.Status, &s.Datetime, &s.View)
+		if err != nil {
+			continue
+		}
+		res = append(res, s)
+	}
+	return res, err
+}
+
 // GetAll Получение всех групп
 func GetAll(table string, db *sql.DB) (map[int64]Group, error) {
 	res := make(map[int64]Group)

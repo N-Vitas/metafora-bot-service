@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"metafora-bot-service/controller/crontimes"
 	"metafora-bot-service/controller/groupmanager"
 	"metafora-bot-service/controller/groups"
 	"metafora-bot-service/controller/managers"
@@ -26,6 +27,7 @@ type Controller struct {
 	bot              *telegram.BotApp
 	onMessage        func(chatRoom string, chatID int64, message string, params interface{})
 	deleteRoomClient func(chatRoom string, chatID int64, message string, params interface{})
+	Cron             *crontimes.Validator
 }
 
 // Init Инициализация контроллера
@@ -47,6 +49,7 @@ func Init(db *database.SessionDb) *Controller {
 			"wp_chatbottelegram_user",
 		},
 		DurationClients: 30,
+		Cron:            crontimes.New(60, db.GetDb),
 	}
 	if err := messages.Init(c.GetTableName("message"), db.GetDb()); err != nil {
 		Error("Messages Init error : %v", err)
@@ -79,9 +82,13 @@ func Init(db *database.SessionDb) *Controller {
 		c.Host = s.HostService
 		c.FolderID = s.GoogleFolder
 		c.BotToken = s.Token
+		c.Cron.Limit = s.DurationManagers
 	}
 	c.bot = telegram.NewTelegramApp(c.BotToken, c.FindUser, c.CreateUser, c.UpdateUser, c.OnMessage, c.OnComands)
 	go c.bot.Start()
+	c.Cron.SetTableName(c.GetTableName)
+	c.Cron.SetSendCronMessages(c.SendCronMessages)
+	c.Cron.Run()
 	return c
 }
 

@@ -104,6 +104,22 @@ func GetAllInID(messagesID string, table string, db *sql.DB) ([]Message, error) 
 	return m, errors.New("Строка не содержит ID сообщений")
 }
 
+// GetByID Получение сообщения по id
+func GetByID(id int64, table string, db *sql.DB) (Message, error) {
+	s := Message{ID: id}
+	query := fmt.Sprintf("SELECT id, img, chatRoom, message, chatID, groupID, replicID, status, date, type, dataType FROM %s WHERE id = %d", table, id)
+	err := db.QueryRow(query).Scan(&s.ID, &s.Img, &s.Room, &s.Message, &s.ChatID, &s.GroupID, &s.ReplicID, &s.Status, &s.Datetime, &s.Type, &s.DataType)
+	return s, err
+}
+
+// GetLastMessage Получение последнего сообщения комнаты после реплики бота
+func GetLastMessage(chatRoom string, table string, db *sql.DB) (Message, error) {
+	s := Message{}
+	query := fmt.Sprintf("SELECT id, img, chatRoom, message, chatID, groupID, replicID, status, date, type, dataType FROM %s WHERE replicID >= 6 and chatRoom = '%s' ORDER BY id DESC", table, chatRoom)
+	err := db.QueryRow(query).Scan(&s.ID, &s.Img, &s.Room, &s.Message, &s.ChatID, &s.GroupID, &s.ReplicID, &s.Status, &s.Datetime, &s.Type, &s.DataType)
+	return s, err
+}
+
 // NewMessage Создание нового сообщения
 func NewMessage(table string, db *sql.DB, img, chatRoom, message, types, dataType string, chatID, groupID, replicID int64) (int64, error) {
 	query := fmt.Sprintf(`INSERT INTO %s (img, chatID, groupID, replicID, chatRoom, message, date, type, dataType) 
@@ -115,4 +131,13 @@ func NewMessage(table string, db *sql.DB, img, chatRoom, message, types, dataTyp
 		return 0, err
 	}
 	return res.LastInsertId()
+}
+
+// Update Обновление комнаты
+func Update(s Message, table string, db *sql.DB) error {
+	query := fmt.Sprintf(`UPDATE %s SET img='%s', chatRoom='%s', message='%s', chatID=%d, groupID=%d, replicID=%d, status=%d, date=DATETIMES, type='%s', dataType='%s' WHERE id = %d`,
+		table, s.Img, s.Room, s.Message, s.ChatID, s.GroupID, s.ReplicID, s.Status, s.Type, s.DataType, s.ID)
+	query = strings.Replace(query, "DATETIMES", "strftime('%Y-%m-%d %H:%M:%S','now')", -1)
+	_, err := db.Exec(query)
+	return err
 }

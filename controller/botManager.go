@@ -221,6 +221,15 @@ func (c *Controller) OnComands(chatID int64, post telegram.PostRequests) {
 	}
 }
 
+// SendCronMessages Функция отправляет сообщения новой группе
+func (c *Controller) SendCronMessages(room rooms.Room, msgs []messages.Message) {
+	filter := []string{}
+	for _, message := range msgs {
+		filter = append(filter, message.Message)
+	}
+	c.SendGroup(room.GroupID, fmt.Sprintf("\r*Внимание срочно нужно ответить*\n*Переписка комнаты %d*\n\n%s", room.ID, strings.Join(filter, "\n")), room.ID)
+}
+
 // DeleteRoomClient Функция для сокета чтоб клиент удалил индификатор комнаты
 func (c *Controller) DeleteRoomClient(roomID int64) {
 	room, err := rooms.GetByID(roomID, c.GetTableName("rooms"), c.DB.GetDb())
