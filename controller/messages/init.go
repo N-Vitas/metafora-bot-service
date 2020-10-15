@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // Message Структура сообщения
@@ -115,7 +116,7 @@ func GetByID(id int64, table string, db *sql.DB) (Message, error) {
 // GetLastMessage Получение последнего сообщения комнаты после реплики бота
 func GetLastMessage(chatRoom string, table string, db *sql.DB) (Message, error) {
 	s := Message{}
-	query := fmt.Sprintf("SELECT id, img, chatRoom, message, chatID, groupID, replicID, status, date, type, dataType FROM %s WHERE replicID >= 6 and chatRoom = '%s' ORDER BY id DESC", table, chatRoom)
+	query := fmt.Sprintf("SELECT id, img, chatRoom, message, chatID, groupID, replicID, status, date, type, dataType FROM %s WHERE chatRoom = '%s' ORDER BY id DESC", table, chatRoom)
 	err := db.QueryRow(query).Scan(&s.ID, &s.Img, &s.Room, &s.Message, &s.ChatID, &s.GroupID, &s.ReplicID, &s.Status, &s.Datetime, &s.Type, &s.DataType)
 	return s, err
 }
@@ -135,9 +136,8 @@ func NewMessage(table string, db *sql.DB, img, chatRoom, message, types, dataTyp
 
 // Update Обновление комнаты
 func Update(s Message, table string, db *sql.DB) error {
-	query := fmt.Sprintf(`UPDATE %s SET img='%s', chatRoom='%s', message='%s', chatID=%d, groupID=%d, replicID=%d, status=%d, date=DATETIMES, type='%s', dataType='%s' WHERE id = %d`,
-		table, s.Img, s.Room, s.Message, s.ChatID, s.GroupID, s.ReplicID, s.Status, s.Type, s.DataType, s.ID)
-	query = strings.Replace(query, "DATETIMES", "strftime('%Y-%m-%d %H:%M:%S','now')", -1)
+	query := fmt.Sprintf(`UPDATE %s SET img='%s', chatRoom='%s', message='%s', chatID=%d, groupID=%d, replicID=%d, status=%d, date='%s', type='%s', dataType='%s' WHERE id = %d`,
+		table, s.Img, s.Room, s.Message, s.ChatID, s.GroupID, s.ReplicID, s.Status, time.Now().UTC().Format("2006-01-02 15:04:05"), s.Type, s.DataType, s.ID)
 	_, err := db.Exec(query)
 	return err
 }

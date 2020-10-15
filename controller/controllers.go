@@ -88,7 +88,7 @@ func Init(db *database.SessionDb) *Controller {
 	go c.bot.Start()
 	c.Cron.SetTableName(c.GetTableName)
 	c.Cron.SetSendCronMessages(c.SendCronMessages)
-	c.Cron.Run()
+	c.Cron.Check()
 	return c
 }
 

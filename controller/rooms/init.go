@@ -80,7 +80,7 @@ func GetByID(id int64, table string, db *sql.DB) (Room, error) {
 
 // GetAllIsOpen Получение всех сообщений комнаты по ID
 func GetAllIsOpen(table string, db *sql.DB) ([]Room, error) {
-	m := []Room{}
+	var m []Room
 	ID := sql.NullInt64{}
 	ChatID := sql.NullInt64{}
 	GroupID := sql.NullInt64{}
@@ -99,7 +99,8 @@ func GetAllIsOpen(table string, db *sql.DB) ([]Room, error) {
 	defer rows.Close()
 	for rows.Next() {
 		err = rows.Scan(&ID, &ChatID, &GroupID, &ReplicID, &LastMessage, &MessagesID, &ChatRoom, &Datetime, &Mute, &Status)
-		if err != nil {
+		if err != nil || ID.Int64 == 0 {
+			fmt.Println("GetAllIsOpen Scan ID", ID.Int64, "GetAllIsOpen Scan Error", err.Error())
 			continue
 		}
 		m = append(m, Room{

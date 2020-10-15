@@ -64,14 +64,15 @@ func (l *Validator) GetTableName(name string) string {
 // Run Функция выполняющая проверку
 func (l *Validator) Run() {
 	// И так для начала собераем все открытые комнаты
-	chats, _ := rooms.GetAllIsOpen(l.GetTableName("rooms"), l.GetDb())
-	if len(chats) == 0 {
+	dataset, err := rooms.GetAllIsOpen(l.GetTableName("rooms"), l.GetDb())
+	if len(dataset) == 0 || err != nil {
+		fmt.Println("Run err", err)
 		return
 	}
 	// Далее нужно отфильтровать комнаты у которых срок ответа истек
-	chats = l.FilterRooms(chats)
+	nChats := l.FilterRooms(dataset)
 	// Далее нужно разделить комнаты на пустые, с группой и менеджером
-	e, g, m := l.RangeRoom(chats)
+	e, g, m := l.RangeRoom(nChats)
 	// Далее нужно что то сделать с путсыми комнатами
 	l.ExecEmptyRooms(e)
 	// Далее нужно переслать все в другую группу
@@ -81,38 +82,31 @@ func (l *Validator) Run() {
 }
 
 // FilterRooms отфильтровывает комнаты у которых срок ответа истек
-func (l *Validator) FilterRooms(r []rooms.Room) []rooms.Room {
-	for i, v := range r {
+func (l *Validator) FilterRooms(res []rooms.Room) []rooms.Room {
+	t := time.Now().UTC()
+	r := []rooms.Room{}
+	for _, v := range res {
+		if v.ID == 0 {
+			continue
+		}
 		m, err := messages.GetLastMessage(v.Room, l.GetTableName("message"), l.GetDb())
 		if err != nil {
 			// Пока оставляю комнату на обработку, так как у комнеты нет сообщений
 			fmt.Println(err, v.Room)
+			r = append(r, v)
 			continue
 		}
-		t := time.Now()
+		back := t.Add(time.Duration(-l.Limit) * time.Second)
 		d, err := time.Parse("2006-01-02 15:04:05", m.Datetime)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Дата не распарсилась", err)
+			r = append(r, v)
 			continue
 		}
-		n := d.Sub(t)
-
-		fmt.Println("now", t)
-		fmt.Println("ago", d)
-		fmt.Println("Message", m.ID, v.Room, m.Room)
-		if n.Hours() > 0 {
-			// Более часа ждать нельзя
-			continue
-		}
-		if int64(n.Seconds()) > l.Limit {
+		if back.After(d) {
 			// Время вышло
-			continue
+			r = append(r, v)
 		}
-		fmt.Println("Нужно удалить", m.ID, r)
-		copy(r[i:], r[i+1:])
-		r[len(r)-1] = rooms.Room{}
-		r = r[:len(r)-1]
-		fmt.Println("Нужно удалить", r)
 	}
 	return r
 }
@@ -178,8 +172,31 @@ func (l *Validator) ExecGroupsRooms(r []rooms.Room) {
 
 // ExecManagersRooms Комната выпинывает менеджера и делает рассылку в ту же группу
 func (l *Validator) ExecManagersRooms(r []rooms.Room) {
-	for _, value := range r {
-		fmt.Println("ExecManagersRooms", value)
+	for i, value := range r {
+		value.ChatID = 0
+		err := rooms.Update(value, l.GetTableName("rooms"), l.GetDb())
+		if err != nil {
+			fmt.Println("ExecGroupsRooms Udate Group error", err)
+			continue
+		}
+		r[i] = value
+		// Далее делаем рассылку в новую группу
+		msg, err := rooms.GetMessagesRoom(value.ID, l.GetTableName("message"), l.GetTableName("rooms"), l.GetDb())
+		if err != nil {
+			continue
+		}
+		if len(msg) > 0 {
+			l.SendCronMessages(value, msg)
+			// Далее обновляем время последнего сообщения для смещения
+			m := messages.Message{}
+			for _, u := range msg {
+				if m.ID < u.ID {
+					m = u
+				}
+			}
+			m.GroupID = value.GroupID
+			messages.Update(m, l.GetTableName("message"), l.GetDb())
+		}
 	}
 }
 
