@@ -54,7 +54,7 @@ func (s *Resource) Register(cors bool) {
 	if cors {
 		corsRule := restful.CrossOriginResourceSharing{
 			//ExposeHeaders: []string{"Content-Type"},
-			AllowedDomains: []string{"http://127.0.0.1", "http://localhost"},
+			AllowedDomains: []string{"http://127.0.0.1", "http://localhost", "http://185.244.29.230", "http://chat.metafora.kz", "http://chat.metafora.kz"},
 			AllowedHeaders: []string{"*", "content-type", "authorization", "uuid", "Accept", "X-Custom-Header", "Origin", "Access-Control-Allow-Origin"},
 			AllowedMethods: []string{"POST", "GET", "OPTIONS"},
 			CookiesAllowed: false,
