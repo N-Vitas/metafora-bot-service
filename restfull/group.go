@@ -132,7 +132,7 @@ func (app *Resource) CreateGroup(req *restful.Request, resp *restful.Response) {
 		WriteStatusError(http.StatusUnauthorized, forbiden, resp)
 		return
 	}
-	group := Group{}
+	group := GroupRequest{}
 	decoder := json.NewDecoder(req.Request.Body)
 	err := decoder.Decode(&group)
 	if err != nil {
@@ -160,7 +160,8 @@ func (app *Resource) CreateGroup(req *restful.Request, resp *restful.Response) {
 		WriteStatusError(http.StatusInternalServerError, errors.New("Не удалось создать группу "+err.Error()), resp)
 		return
 	}
-	app.FixGroupManagers(group)
+	app.FixGroupManagers(group.Simple())
+	app.FixParentGroup(group)
 	query = "select parentID, name, title, view, date, status from " + app.Table("groups") + " where id = ?"
 	app.GetDb().QueryRow(query, group.ID).Scan(&group.ParentID, &group.Name, &group.Title, &group.View, &group.Date, &group.Status)
 	app.FixBotTell()
@@ -174,7 +175,7 @@ func (app *Resource) UpdateGroup(req *restful.Request, resp *restful.Response) {
 		WriteStatusError(http.StatusUnauthorized, forbiden, resp)
 		return
 	}
-	group := Group{}
+	group := GroupRequest{}
 	decoder := json.NewDecoder(req.Request.Body)
 	err := decoder.Decode(&group)
 	if err != nil {
@@ -196,7 +197,8 @@ func (app *Resource) UpdateGroup(req *restful.Request, resp *restful.Response) {
 		WriteStatusError(http.StatusInternalServerError, errors.New("Не удалось обновить группу "+err.Error()), resp)
 		return
 	}
-	app.FixGroupManagers(group)
+	app.FixGroupManagers(group.Simple())
+	app.FixParentGroup(group)
 	query := "select parentID, name, title, view, date, status from " + app.Table("groups") + " where id = ?"
 	app.GetDb().QueryRow(query, group.ID).Scan(&group.ParentID, &group.Name, &group.Title, &group.View, &group.Date, &group.Status)
 	app.FixBotTell()
@@ -243,6 +245,16 @@ func (app *Resource) FixGroupManagers(group Group) {
 	}
 }
 
+// FixParentGroup Синхронизация дочерних групп в группе
+func (app *Resource) FixParentGroup(group GroupRequest) {
+	// Удаление подгруппы если она есть у кого то еще
+	app.GetDb().Exec(fmt.Sprintf(`UPDATE %s SET parentID=0 WHERE parentID in(%d,%d,%d)`, app.Table("groups"), group.ID, group.First, group.Second))
+	// Установка подгруппы 1-го уровня
+	app.GetDb().Exec(fmt.Sprintf(`UPDATE %s SET parentID=%d WHERE id = %d`, app.Table("groups"), group.ID, group.First))
+	// Установка подгруппы 2-го уровня
+	app.GetDb().Exec(fmt.Sprintf(`UPDATE %s SET parentID=%d WHERE id = %d`, app.Table("groups"), group.First, group.Second))
+}
+
 // FixBotTell Синхронизация в реплики бота
 func (app *Resource) FixBotTell() {
 	query := "select title from " + app.Table("groups") + " where view = 1"
@@ -276,4 +288,25 @@ type Group struct {
 	Date     string  `json:"date"`
 	Status   int64   `json:"status"`
 	Managers []int64 `json:"managers"`
+}
+
+// GroupRequest Структура группы с дополнительными параметрами
+type GroupRequest struct {
+	Group
+	First  int64 `json:"first"`
+	Second int64 `json:"second"`
+}
+
+// Simple Возвращает простую группу
+func (g *GroupRequest) Simple() Group {
+	return Group{
+		ID:       g.ID,
+		ParentID: g.ParentID,
+		Name:     g.Name,
+		Title:    g.Title,
+		View:     g.View,
+		Date:     g.Date,
+		Status:   g.Status,
+		Managers: g.Managers,
+	}
 }
