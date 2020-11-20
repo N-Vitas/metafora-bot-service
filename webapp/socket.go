@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"golang.org/x/net/websocket"
-	"google.golang.org/api/drive/v3"
+	// "google.golang.org/api/drive/v3"
 )
 
 // ServerSoket Структура сокета
@@ -18,11 +18,11 @@ type ServerSoket struct {
 	doneCh     chan bool
 	errCh      chan error
 	Controller *controller.Controller
-	srv        *drive.Service
+	// srv        *drive.Service
 }
 
 // NewServerSoket Создание структуры сокета
-func NewServerSoket(pattern string, control *controller.Controller, srv *drive.Service) *ServerSoket {
+func NewServerSoket(pattern string, control *controller.Controller/*, srv *drive.Service*/) *ServerSoket {
 	server := &ServerSoket{
 		pattern,
 		make(map[int]*Client),
@@ -32,7 +32,7 @@ func NewServerSoket(pattern string, control *controller.Controller, srv *drive.S
 		make(chan bool),
 		make(chan error),
 		control,
-		srv,
+		// srv,
 	}
 	server.Controller.SetDeleteRoomClient(server.DeleteRoomClient)
 	return server

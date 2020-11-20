@@ -9,7 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"path/filepath"
+	// "path/filepath"
 
 	"context"
 
@@ -136,7 +136,7 @@ func ClearGoogleDrive(srv *drive.Service) {
 }
 
 // CreateFile Создание файла в гугл диске
-func CreateFile(srv *drive.Service, folder string, handler *multipart.FileHeader, file multipart.File) (string, bool) {
+func CreateFile(/*srv *drive.Service, folder string, */handler *multipart.FileHeader, file multipart.File) (string, bool) {
 	f, err := os.OpenFile("./upload/"+handler.Filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		fmt.Println(err)
@@ -149,21 +149,22 @@ func CreateFile(srv *drive.Service, folder string, handler *multipart.FileHeader
 	}()
 	io.Copy(f, file)
 	f.Close()
-	f, err = os.Open("./upload/" + handler.Filename)
-	fileInfo, err := f.Stat()
-	if err != nil {
-		fmt.Println("Stat", err)
-		return "", false
-	}
-	inFile := &drive.File{
-		Name:     filepath.Base(fileInfo.Name()),
-		Parents:  []string{folder},
-		MimeType: "application/octet-stream",
-	}
-	outFile, err := srv.Files.Create(inFile).Media(f).Do()
-	if err != nil {
-		fmt.Println("CreateFile err", err)
-		return "", false
-	}
-	return fmt.Sprintf("https://drive.google.com/file/d/%s/view", outFile.Id), true
+	return fmt.Sprintf("http://185.144.29.230:8082/public/%s", handler.Filename), true
+	// f, err = os.Open("./upload/" + handler.Filename)
+	// fileInfo, err := f.Stat()
+	// if err != nil {
+	// 	fmt.Println("Stat", err)
+	// 	return "", false
+	// }
+	// inFile := &drive.File{
+	// 	Name:     filepath.Base(fileInfo.Name()),
+	// 	Parents:  []string{folder},
+	// 	MimeType: "application/octet-stream",
+	// }
+	// outFile, err := srv.Files.Create(inFile).Media(f).Do()
+	// if err != nil {
+	// 	fmt.Println("CreateFile err", err)
+	// 	return "", false
+	// }
+	// return fmt.Sprintf("https://drive.google.com/file/d/%s/view", outFile.Id), true
 }

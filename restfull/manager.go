@@ -90,7 +90,7 @@ func (app *Resource) UpdateManager(req *restful.Request, resp *restful.Response)
 		WriteStatusError(http.StatusBadRequest, errors.New("Не верный ID менеджера"), resp)
 		return
 	}
-	_, err = app.GetDb().Exec(fmt.Sprintf(`UPDATE %s SET firstname='%s', lastname='%s', username='%s', status=%d WHERE id=%d`,
+	_, err = app.GetDb().Exec(fmt.Sprintf(`UPDATE %s SET userID=1, firstname='%s', lastname='%s', username='%s', status=%d WHERE id=%d`,
 		app.Table("managers"), manager.FirstName, manager.LastName, manager.UserName, manager.Status, manager.ID))
 	if err != nil {
 		WriteStatusError(http.StatusInternalServerError, errors.New("Не удалось обновить менеджера "+err.Error()), resp)

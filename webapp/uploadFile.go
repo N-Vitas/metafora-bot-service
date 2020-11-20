@@ -16,7 +16,7 @@ func (s *ServerSoket) UploadFile(w http.ResponseWriter, r *http.Request) {
 		Error("Error Retrieving the File %v", err)
 		return
 	}
-	if link, ok := googledrive.CreateFile(s.srv, s.Controller.FolderID, handler, file); ok {
+	if link, ok := googledrive.CreateFile(/*s.srv, s.Controller.FolderID, */handler, file); ok {
 		Notice("CreateFile %s", link)
 		if room, ok := s.Controller.GetRoom(room); ok {
 			if room, ok = s.Controller.CreateClientMessage(link, room); ok {

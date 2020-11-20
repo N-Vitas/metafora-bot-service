@@ -1,6 +1,5 @@
 admin/node_modules
 
-admin/# misc
 admin/.DS_Store
 admin/.env.local
 admin/.env.development.local
@@ -15,3 +14,4 @@ admin/.idea
 admin/DS_Store
 admin/package-lock.json
 wp_chat64.*
+upload

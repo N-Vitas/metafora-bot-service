@@ -75,6 +75,11 @@ func NewAdminInterface() {
 	webapp.Notice("Интерфейс администратора запущен по пути %s", "/admin")
 }
 
+func NewUploadInterface() {
+	fs := http.FileServer(http.Dir("./upload"))
+	http.Handle("/public/", http.StripPrefix("/public/", fs))
+}
+
 // Info Вывод информации в консоль
 func Info(template string, values ...interface{}) {
 	t := time.Now().Format("2006/01/02 15:04:05")
