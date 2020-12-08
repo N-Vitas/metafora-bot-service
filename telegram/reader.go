@@ -86,7 +86,7 @@ func (app *BotApp) RoomsButtonSend(chatID int64, rooms []int64, message string) 
 			allkeys = append(allkeys, tgbotapi.NewKeyboardButtonRow(keys...))
 			keys = []tgbotapi.KeyboardButton{}
 		}
-		keys = append(keys, tgbotapi.NewKeyboardButton(fmt.Sprintf("Чат номер %d", v)))
+		keys = append(keys, tgbotapi.NewKeyboardButton(fmt.Sprintf("%d", v)))
 	}
 	if len(keys) > 0 {
 		allkeys = append(allkeys, keys)

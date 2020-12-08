@@ -3,6 +3,7 @@ package crontimes
 import (
 	"database/sql"
 	"fmt"
+	"net/smtp"
 	"metafora-bot-service/controller/groups"
 	"metafora-bot-service/controller/messages"
 	"metafora-bot-service/controller/rooms"
@@ -65,8 +66,10 @@ func (l *Validator) GetTableName(name string) string {
 func (l *Validator) Run() {
 	// И так для начала собераем все открытые комнаты
 	dataset, err := rooms.GetAllIsOpen(l.GetTableName("rooms"), l.GetDb())
-	if len(dataset) == 0 || err != nil {
-		fmt.Println("Run err", err)
+	if len(dataset) == 0 {
+		if err != nil {
+			fmt.Println("Validator Run err", err)
+		}
 		return
 	}
 	// Далее нужно отфильтровать комнаты у которых срок ответа истек
@@ -140,6 +143,7 @@ func (l *Validator) ExecGroupsRooms(r []rooms.Room) {
 		g, err := groups.GetParents(value.GroupID, l.GetTableName("groups"), l.GetDb())
 		if err != nil || len(g) == 0 {
 			fmt.Println("Find Groups error", err)
+			// l.SendMailTo("nikonov.vitas@gmail.com", "Ни кто не отвечает клиенту", "Э дай там всем нагоняй. Хай работают")
 			continue
 		}
 		// Далее устанавливаем новую группу
@@ -168,6 +172,22 @@ func (l *Validator) ExecGroupsRooms(r []rooms.Room) {
 			messages.Update(m, l.GetTableName("message"), l.GetDb())
 		}
 	}
+}
+// SendMailTo отправка почтового письма по адресу
+func (s *Validator) SendMailTo(to string, title string, body string) bool {
+	from := "metaforabot@gmail.com" // От кого отправлять
+	pass := "1Q2w3e4r5t!" // Пароль от почтового ящика
+	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n" // Это для кирилицы
+	msg := fmt.Sprintf("From: %s\nTo: %s\nSubject: %s %s\n%s%s", from, to, "Metafora Chat Bot", title, mime, body)
+	err := smtp.SendMail("smtp.gmail.com:587",
+		smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
+		from, []string{to}, []byte(msg))
+
+	if err != nil {
+		fmt.Printf("smtp error: %s, %s\n", err, from)
+		return false
+	}
+	return true
 }
 
 // ExecManagersRooms Комната выпинывает менеджера и делает рассылку в ту же группу
