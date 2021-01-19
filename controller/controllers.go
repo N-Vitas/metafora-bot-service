@@ -83,6 +83,7 @@ func Init(db *database.SessionDb) *Controller {
 		c.FolderID = s.GoogleFolder
 		c.BotToken = s.Token
 		c.Cron.Limit = s.DurationManagers
+		c.Cron.InitMail(s.FromMail, s.ToMail, s.PassMail, s.TitleMail, s.BodyMail)
 	}
 	c.bot = telegram.NewTelegramApp(c.BotToken, c.FindUser, c.CreateUser, c.UpdateUser, c.OnMessage, c.OnComands)
 	go c.bot.Start()

@@ -33,7 +33,7 @@ func (app *Resource) GetSettings(req *restful.Request, resp *restful.Response) {
 	}
 	r := Settings{ID: 1}
 	query := `select token, updateID, comandID, crontime, googleFolder, hostService, durationManagers, 
-		durationClients, durationStart, messageFailManager, messageFormAuth 
+		durationClients, durationStart, messageFailManager, messageFormAuth, fromMail, toMail, passMail, titleMail, bodyMail 
 		from ` + app.Table("settings") + ` where id = 1`
 	app.GetDb().QueryRow(query).Scan(
 		&r.Token,
@@ -47,6 +47,11 @@ func (app *Resource) GetSettings(req *restful.Request, resp *restful.Response) {
 		&r.DurationStart,
 		&r.MessageFailManager,
 		&r.MessageFormAuth,
+		&r.FromMail,
+		&r.ToMail,
+		&r.PassMail,
+		&r.TitleMail,
+		&r.BodyMail,
 	)
 	// Ответ пользователю
 	WriteResponse(r, resp)
@@ -71,9 +76,9 @@ func (app *Resource) UpdateSettings(req *restful.Request, resp *restful.Response
 		return
 	}
 	_, err = app.GetDb().Exec(fmt.Sprintf(`UPDATE %s SET token='%s', updateID=%d, comandID=%d, crontime='%s', googleFolder='%s', 
-	hostService='%s', durationManagers=%d, durationClients=%d, durationStart=%d, messageFailManager='%s', messageFormAuth='%s' WHERE id=%d`,
+	hostService='%s', durationManagers=%d, durationClients=%d, durationStart=%d, messageFailManager='%s', messageFormAuth='%s', fromMail='%s', toMail='%s', passMail='%s', titleMail='%s', bodyMail='%s' WHERE id=%d`,
 		app.Table("settings"), s.Token, s.UpdateID, s.ComandID, s.Crontime, s.GoogleFolder, s.HostService,
-		s.DurationManagers, s.DurationClients, s.DurationStart, s.MessageFailManager, s.MessageFormAuth, s.ID))
+		s.DurationManagers, s.DurationClients, s.DurationStart, s.MessageFailManager, s.MessageFormAuth, s.FromMail, s.ToMail, s.PassMail, s.TitleMail, s.BodyMail, s.ID))
 	if err != nil {
 		WriteStatusError(http.StatusInternalServerError, errors.New("Не удалось обновить настройки "+err.Error()), resp)
 		return
@@ -95,4 +100,9 @@ type Settings struct {
 	DurationStart      int64  `json:"durationStart"`
 	MessageFailManager string `json:"messageFailManager"`
 	MessageFormAuth    string `json:"messageFormAuth"`
+	FromMail		   string `json:"fromMail"`
+	ToMail 			   string `json:"toMail"`
+	PassMail 		   string `json:"passMail"`
+	TitleMail 		   string `json:"titleMail"`
+	BodyMail 		   string `json:"bodyMail"`
 }

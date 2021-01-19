@@ -14,4 +14,5 @@ admin/.idea
 admin/DS_Store
 admin/package-lock.json
 wp_chat64.*
+wp_chat.*
 upload

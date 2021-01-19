@@ -22,6 +22,10 @@ func (app *Resource) RoomService() *restful.WebService {
 	ws.Route(ws.POST("/update").To(app.UpdateRoomByID).
 		Doc("Изменения в чате").
 		Operation("UpdateRoomByID"))
+	ws.Route(ws.DELETE("/{id}").To(app.DeleteRoomByID).
+		Doc("Получение всех комнат").
+		Operation("GetAllRoom").
+		Param(ws.PathParameter("id", "ID!")))
 	return ws
 }
 
@@ -107,6 +111,21 @@ func (app *Resource) UpdateRoomByID(req *restful.Request, resp *restful.Response
 		app.Table("rooms"), msg.Status, msg.ChatRoom))
 	if err != nil {
 		WriteStatusError(http.StatusInternalServerError, errors.New("Не удалось обновить менеджера "+err.Error()), resp)
+		return
+	}
+	WriteSuccess(resp)
+}
+
+func (app *Resource) DeleteRoomByID(req *restful.Request, resp *restful.Response) {
+	_, forbiden := app.JWTFilter(req)
+	if forbiden != nil {
+		WriteStatusError(http.StatusUnauthorized, forbiden, resp)
+		return
+	}
+	_, err := app.GetDb().Exec(fmt.Sprintf(`DELETE FROM %s WHERE id=%v`,
+		app.Table("rooms"), req.PathParameter("id")))
+	if err != nil {
+		WriteStatusError(http.StatusInternalServerError, errors.New("Не удалось удалить комнату "+err.Error()), resp)
 		return
 	}
 	WriteSuccess(resp)

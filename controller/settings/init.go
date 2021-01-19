@@ -19,6 +19,11 @@ type Settings struct {
 	DurationStart      int64  `json:"durationStart"`
 	MessageFailManager string `json:"messageFailManager"`
 	MessageFormAuth    string `json:"messageFormAuth"`
+	FromMail		   string `json:"fromMail"`
+	ToMail 			   string `json:"toMail"`
+	PassMail 		   string `json:"passMail"`
+	TitleMail 		   string `json:"titleMail"`
+	BodyMail 		   string `json:"bodyMail"`
 }
 
 // Init Создание базы данных для сообщений
@@ -51,14 +56,19 @@ func Init(table string, db *sql.DB) error {
 		durationClients integer NOT NULL DEFAULT 5,
 		durationStart integer NOT NULL DEFAULT 30,
 		messageFailManager TEXT,
-		messageFormAuth TEXT
+		messageFormAuth TEXT,
+		fromMail TEXT,
+		toMail TEXT,
+		passMail TEXT,
+		titleMail TEXT
+		bodyMail TEXT
 	  );`,
 		table,
 	)
 	if _, err := db.Exec(query); err == nil {
 		// Дамп данных таблицы
-		query = fmt.Sprintf(`INSERT INTO %s (id, token, crontime, updateID, comandID, googleFolder, hostService, durationManagers, durationClients, durationStart, messageFailManager, messageFormAuth) VALUES
-			(1, 'token', '10_sec', 0, 0, '1Jq0Kxw8KsnPNZNbf-QJZOed4BHo9uFeO', '0.0.0.0:8082', 30, 30, 300, 'messageFailManager','messageFormAuth');
+		query = fmt.Sprintf(`INSERT INTO %s (id, token, crontime, updateID, comandID, googleFolder, hostService, durationManagers, durationClients, durationStart, messageFailManager, messageFormAuth, fromMail, toMail, passMail, titleMail, bodyMail) VALUES
+			(1, 'token', '10_sec', 0, 0, '1Jq0Kxw8KsnPNZNbf-QJZOed4BHo9uFeO', '0.0.0.0:8082', 30, 30, 300, 'messageFailManager','messageFormAuth', 'fromMail', 'toMail', 'passMail', 'titleMail', 'bodyMail');
 		`,
 			table,
 		)
@@ -71,7 +81,7 @@ func Init(table string, db *sql.DB) error {
 // Get Получение настроек
 func Get(table string, db *sql.DB) (Settings, error) {
 	s := Settings{}
-	query := fmt.Sprintf("SELECT id, token, updateID, comandID, crontime, googleFolder, hostService, durationManagers, durationClients, durationStart, messageFailManager, messageFormAuth FROM %s WHERE id = 1", table)
-	err := db.QueryRow(query).Scan(&s.ID, &s.Token, &s.UpdateID, &s.ComandID, &s.Crontime, &s.GoogleFolder, &s.HostService, &s.DurationManagers, &s.DurationClients, &s.DurationStart, &s.MessageFailManager, &s.MessageFormAuth)
+	query := fmt.Sprintf("SELECT id, token, updateID, comandID, crontime, googleFolder, hostService, durationManagers, durationClients, durationStart, messageFailManager, messageFormAuth, fromMail, toMail, passMail, titleMail, bodyMail FROM %s WHERE id = 1", table)
+	err := db.QueryRow(query).Scan(&s.ID, &s.Token, &s.UpdateID, &s.ComandID, &s.Crontime, &s.GoogleFolder, &s.HostService, &s.DurationManagers, &s.DurationClients, &s.DurationStart, &s.MessageFailManager, &s.MessageFormAuth, &s.FromMail, &s.ToMail, &s.PassMail, &s.TitleMail, &s.BodyMail)
 	return s, err
 }

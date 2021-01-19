@@ -17,6 +17,11 @@ type Validator struct {
 	stop             chan bool
 	getTableName     func(string) string
 	sendCronMessages func(rooms.Room, []messages.Message)
+	fromMail 		string
+	toMail 			string
+	passMail 		string
+	titleMail		string
+	bodyMail 		string
 }
 
 // New Сбор валидатора с интервалом
@@ -28,6 +33,14 @@ func New(limit int64, getDb func() *sql.DB) *Validator {
 	}
 }
 
+// InitMail Функция Данных почтового ящика
+func (l *Validator) InitMail(from string, to string, pass string, titleMail string, bodyMail string) {
+	l.fromMail = from
+	l.toMail = to
+	l.passMail = pass
+	l.titleMail = titleMail
+	l.bodyMail = bodyMail
+}
 // Check Функция таймера
 func (l *Validator) Check() {
 	ticker := time.NewTicker(time.Duration(30) * time.Second)
@@ -142,8 +155,12 @@ func (l *Validator) ExecGroupsRooms(r []rooms.Room) {
 		// Ищем дочернюю группу
 		g, err := groups.GetParents(value.GroupID, l.GetTableName("groups"), l.GetDb())
 		if err != nil || len(g) == 0 {
-			fmt.Println("Find Groups error", err)
-			// l.SendMailTo("nikonov.vitas@gmail.com", "Ни кто не отвечает клиенту", "Э дай там всем нагоняй. Хай работают")
+			if value.Status != 5 {
+				fmt.Println("Find Groups error", err)
+				l.SendMailTo(l.toMail, l.titleMail, l.bodyMail)
+				value.Status = 5
+				rooms.Update(value, l.GetTableName("rooms"), l.GetDb())
+			}
 			continue
 		}
 		// Далее устанавливаем новую группу
@@ -175,16 +192,14 @@ func (l *Validator) ExecGroupsRooms(r []rooms.Room) {
 }
 // SendMailTo отправка почтового письма по адресу
 func (s *Validator) SendMailTo(to string, title string, body string) bool {
-	from := "metaforabot@gmail.com" // От кого отправлять
-	pass := "1Q2w3e4r5t!" // Пароль от почтового ящика
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n" // Это для кирилицы
-	msg := fmt.Sprintf("From: %s\nTo: %s\nSubject: %s %s\n%s%s", from, to, "Metafora Chat Bot", title, mime, body)
+	msg := fmt.Sprintf("From: %s\nTo: %s\nSubject: %s %s\n%s%s", s.fromMail, to, "Metafora Chat Bot", title, mime, body)
 	err := smtp.SendMail("smtp.gmail.com:587",
-		smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
-		from, []string{to}, []byte(msg))
+		smtp.PlainAuth("", s.fromMail, s.passMail, "smtp.gmail.com"),
+		s.fromMail, []string{to}, []byte(msg))
 
 	if err != nil {
-		fmt.Printf("smtp error: %s, %s\n", err, from)
+		fmt.Printf("smtp error: %s, %s\n", err, s.fromMail)
 		return false
 	}
 	return true
